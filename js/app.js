@@ -252,7 +252,7 @@ function select(i) {
   const d = ph.describe(state.phrase);
   $("ptitle").textContent = state.phrase.n;
   const loop = ph.loopLength(state.phrase, state.nstep);
-  $("loopinfo").textContent = loop < state.nstep ? `loop ${loop}` : `loop all ${state.nstep}`;
+  $("loopinfo").textContent = `loop ${loop}`;
   $("pmeta").innerHTML =
     `${escapeHtml(state.phrase.title)} · <b>${d.steps}</b> steps · <b>${d.notes}</b> notes · ` +
     (d.lo != null ? `range ${ph.noteName(d.lo)}–${ph.noteName(d.hi)}` : "empty") +
