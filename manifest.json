@@ -1,0 +1,10 @@
+{
+  "name": "Cantoral — phrases to the FM-1",
+  "short_name": "Cantoral",
+  "description": "Push the Renoise phrase library into the M-VAVE FM-1's sequencer over Web MIDI.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#1e1524",
+  "theme_color": "#1e1524",
+  "icons": []
+}

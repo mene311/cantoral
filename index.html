@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1e1524">
+<title>Cantoral · phrases → FM-1</title>
+<link rel="icon" href="data:,">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="css/style.css?v=1">
+<link rel="stylesheet" href="css/app.css?v=4">
+</head>
+<body>
+<div class="case">
+  <header class="brand">
+    <h1>CANTOR<b>AL</b> <small>phrases → FM-1</small></h1>
+    <div class="dev">
+      <span class="led" id="led"></span>
+      <span id="devname">no MIDI</span>
+    </div>
+  </header>
+
+  <div class="statusrow">
+    <button id="connect" class="glink">connect</button>
+    <span id="status" class="status">loading…</span>
+  </div>
+
+  <div class="layout">
+    <aside class="browser">
+      <input id="search" type="search" placeholder="search the bank…" autocomplete="off">
+      <div id="folders" class="folders"></div>
+      <div class="listhead"><span id="count">—</span><span title="phrase length in steps">len</span></div>
+      <ol id="list" class="plist"></ol>
+    </aside>
+
+    <main class="stage">
+      <h2 id="ptitle">pick a phrase</h2>
+      <div id="pmeta" class="meta"></div>
+      <div class="rollwrap"><canvas id="roll" aria-label="piano roll of the selected phrase"></canvas></div>
+      <div class="transport">
+        <button id="play" title="Hear it on the FM-1 (nothing is written)">▶ Play</button>
+        <label class="knobline">BPM <input id="bpm" type="number" value="120" min="30" max="300" step="1"></label>
+        <label class="knobline" title="Renoise stores a delay per note inside its line. Turn this on to carry it into the step's nudge.">
+          <input id="nudge" type="checkbox"> follow Renoise delay
+        </label>
+      </div>
+    </main>
+
+    <aside class="dest">
+      <h2>Write to</h2>
+      <label class="field">Track <select id="track"></select></label>
+      <label class="field">Entry <select id="entry"></select></label>
+      <p class="hint">that entry holds <b id="entrynow">—</b></p>
+      <button id="push" class="big">Push phrase →</button>
+      <button id="push16">Send 16 · <span id="tracks16">A–P</span></button>
+      <button id="clear" class="quiet">Silence this track</button>
+      <div id="pool" class="pool">—</div>
+      <div id="log" class="log"></div>
+    </aside>
+  </div>
+</div>
+<script type="module" src="js/app.js?v=2"></script>
+</body>
+</html>
