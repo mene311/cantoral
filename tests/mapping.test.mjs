@@ -52,6 +52,15 @@ t("every phrase is padded to the unit's step count", () => {
   assert.ok(steps.every((s) => s.time === fel.ST.REST));
 });
 
+t("a pass ends at the bar after the last note, not at the last note", () => {
+  assert.equal(ph.loopLength({ l: 49 }), 64, "49 lines = 4 bars");
+  assert.equal(ph.loopLength({ l: 61 }), 64);
+  assert.equal(ph.loopLength({ l: 8 }), 16, "a short phrase still gets its bar");
+  assert.equal(ph.loopLength({ l: 16 }), 16, "already on the bar: no padding");
+  assert.equal(ph.loopLength({ l: 64 }), 64, "never longer than the pattern");
+  assert.equal(ph.loopLength({ l: 1 }), 16);
+});
+
 t("describe counts notes, holds and the range", () => {
   const d = ph.describe({ s: [[[60, 100, 0], [64, 90, 0]], "t", null, [[67, 80, 0]]] });
   assert.deepEqual([d.steps, d.notes, d.ties, d.lo, d.hi], [4, 3, 1, 60, 67]);

@@ -251,6 +251,8 @@ function select(i) {
   for (const [k, li] of [...document.querySelectorAll(".item")].entries()) li.classList.toggle("on", k === state.selected);
   const d = ph.describe(state.phrase);
   $("ptitle").textContent = state.phrase.n;
+  const loop = ph.loopLength(state.phrase, state.nstep);
+  $("loopinfo").textContent = loop < state.nstep ? `loop ${loop}` : `loop all ${state.nstep}`;
   $("pmeta").innerHTML =
     `${escapeHtml(state.phrase.title)} · <b>${d.steps}</b> steps · <b>${d.notes}</b> notes · ` +
     (d.lo != null ? `range ${ph.noteName(d.lo)}–${ph.noteName(d.hi)}` : "empty") +
@@ -326,10 +328,21 @@ function drawRoll() {
     g.fillRect(state.playStep * cw, 0, cw, h);
     g.globalAlpha = 1;
   }
-  // the phrase's own length
+  // the phrase's own length, and where the audition turns around
   if (state.phrase && state.phrase.l < steps) {
     g.fillStyle = "rgba(0,0,0,.35)";
     g.fillRect(state.phrase.l * cw, 0, w - state.phrase.l * cw, h);
+  }
+  if (state.phrase) {
+    const loop = ph.loopLength(state.phrase, steps);
+    if (loop < steps) {
+      g.strokeStyle = accent2;
+      g.globalAlpha = 0.5;
+      g.setLineDash([4, 4]);
+      g.beginPath(); g.moveTo(loop * cw, 0); g.lineTo(loop * cw, h); g.stroke();
+      g.setLineDash([]);
+      g.globalAlpha = 1;
+    }
   }
 }
 
@@ -378,22 +391,28 @@ function play() {
   state.playing = true;
   $("play").textContent = "■ Stop";
   const src = state.phrase.s;
-  const total = Math.max(1, state.phrase.l);
+  // a pass runs to the end of the bar the last note lands in, so the air after
+  // the phrase is heard instead of the loop clipping the bar
+  const total = ph.loopLength(state.phrase, state.nstep);
   const stepMs = 60000 / state.bpm / 4;
   let i = 0;
-  const tick = () => {
-    if (!state.playing) return;
-    // release whatever the previous step left sounding
+  const release = () => {
     for (const n of state.heldNotes) midi.sendNoteOff(n, state.track + 1);
     state.heldNotes = [];
-    state.playStep = i;
+  };
+  const tick = () => {
+    if (!state.playing) return;
     const ev = src[i];
+    // A hold ("t") keeps what is sounding; only a fresh note or a rest releases,
+    // otherwise every tied note would come out staccato.
+    if (ev !== "t") release();
     if (Array.isArray(ev)) {
       for (const [p, vel] of ev) {
         midi.sendNoteOn(p, Math.max(1, Math.min(127, vel ?? 100)), state.track + 1);
         state.heldNotes.push(p);
       }
     }
+    state.playStep = i;
     drawRoll();
     i = (i + 1) % total;
     state.playTimer = setTimeout(tick, stepMs);

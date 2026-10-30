@@ -112,10 +112,15 @@ const FAKE = `
   const fake = {
     inputs: new Map(), outputs: new Map(),
     written: [],                                         // for the assertion: what the page wrote
+    notes: [],                                           // note ons/offs the audition sent
   };
   const out = {
     id: 'fm1-out', name: 'FM-1', manufacturer: 'Hügelton',
-    send(bytes) { fake.written.push(Array.from(bytes)); handle(bytes); },
+    send(bytes) {
+      const b = Array.from(bytes);
+      if (b[0] !== 0xF0) fake.notes.push({ t: performance.now(), kind: b[0] & 0xF0, note: b[1], vel: b[2] });
+      fake.written.push(b); handle(bytes);
+    },
   };
   const inp = { id: 'fm1-in', name: 'FM-1', manufacturer: 'Hügelton', onmidimessage: null, open() {} };
   fake.outputs.set(out.id, out); fake.inputs.set(inp.id, inp);
@@ -124,7 +129,7 @@ const FAKE = `
     sysexEnabled: true, onstatechange: null,
   });
   // expose for the assertions
-  window.__fake = { pool, tracks, steps, written: fake.written, setPlaying: (v) => { playing = v; } };
+  window.__fake = { pool, tracks, steps, written: fake.written, notes: fake.notes, setPlaying: (v) => { playing = v; } };
 })();
 `;
 
@@ -189,7 +194,45 @@ await page.click('#push');
 await page.waitForTimeout(1200);
 const refused = await page.textContent('#status');
 await page.evaluate(() => window.__fake.setPlaying(false));
+
+// ---- the audition: a short phrase must turn around at the end of its BAR ----
+// "Dorian Arp" is 8 steps; a bar is 16. Looping at the last note would keep the
+// playhead inside 0..7 — the bug this checks for.
+await page.click('.chip[data-folder="all"]');
+await page.waitForTimeout(1200);
+await page.fill('#search', 'Dorian Arp');
+await page.waitForTimeout(400);
+await page.click('.item:nth-child(1)');
+await page.fill('#bpm', '300');
+await page.waitForTimeout(300);
+const loopText = await page.textContent('#loopinfo');
+await page.evaluate(() => { window.__fake.notes.length = 0; });
+await page.click('#play');
+const seen = await page.evaluate(async () => {
+  const st = window.cantoral;
+  const seq = [];
+  const t0 = performance.now();
+  while (performance.now() - t0 < 1500) {
+    if (seq[seq.length - 1] !== st.playStep) seq.push(st.playStep);
+    await new Promise((r) => setTimeout(r, 15));
+  }
+  return seq;
+});
+await page.click('#play');                     // stop
+// ties must not be cut: every note-off must belong to a note-on that is sounding
+const orphans = await page.evaluate(() => {
+  const held = new Set();
+  let bad = 0;
+  for (const n of window.__fake.notes) {
+    if (n.kind === 0x90 && n.vel > 0) held.add(n.note);
+    else if (n.kind === 0x80) { if (!held.has(n.note)) bad++; held.delete(n.note); }
+  }
+  return bad;
+});
+const wraps = [];
+for (let i = 1; i < seen.length; i++) if (seen[i] < seen[i - 1]) wraps.push([seen[i - 1], seen[i]]);
+const audition = { steps: seen, max: Math.max(...seen), wraps };
 await page.screenshot({ path: '/tmp/cantoral-e2e.png' });
 
-console.log(JSON.stringify({ connected, picked, pushStatus, afterPush, afterSecond, after16, status16, refused, errs }, null, 1));
+console.log(JSON.stringify({ connected, picked, pushStatus, afterPush, afterSecond, after16, status16, refused, loopText, audition, orphans, errs }, null, 1));
 await b.close();

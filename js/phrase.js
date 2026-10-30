@@ -74,6 +74,18 @@ export function describe(phrase) {
   return { steps: src.length, notes, ties, lo: hi ? lo : null, hi: hi || null };
 }
 
+// How long one pass of the phrase is, for the audition.
+//
+// NOT simply "up to the last note": almost every phrase in the library ends mid
+// bar (49, 57, 61 lines…), so looping there cuts the bar in pieces and the phrase
+// limps. A pass ends at the bar after the last note — the same silence the unit
+// plays, since it holds the pattern's full step count.
+export const BAR = 16;
+export function loopLength(phrase, nstep = 64, bar = BAR) {
+  const used = Math.max(1, phrase?.l ?? 1);
+  return Math.min(nstep, Math.max(bar, Math.ceil(used / bar) * bar));
+}
+
 const NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 export function noteName(p) {
   return `${NAMES[p % 12]}${Math.floor(p / 12) - 1}`;

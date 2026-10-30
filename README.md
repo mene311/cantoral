@@ -24,7 +24,11 @@ python3 -m http.server 8080   # Web MIDI needs a secure context: https or localh
    the firmware's own version, its track count and step count.
 2. Pick a folder (or **All**, or search by name), then a phrase. `←` `→` walk the list.
 3. **▶ Play** sends the phrase to the unit on the destination track's channel — nothing
-   is written. `BPM` sets the audition speed.
+   is written. `BPM` sets the audition speed. A pass runs to the **end of the bar** the
+   last note lands in (`loop 16` / `loop all 64`, and the dashed line on the roll), so the
+   air after the phrase is heard instead of the loop clipping the bar — most phrases end
+   mid-bar at 49 or 61 of 64 steps. Holds are honoured too: a tied note is not released
+   until the next note or rest.
 4. **Push phrase →** writes it into the entry you picked (Track / Entry). An entry that
    already holds a pattern is **overwritten in place**; an empty one takes a free pool
    pattern. The pool readout tells you what each track is on and how many patterns are free.
